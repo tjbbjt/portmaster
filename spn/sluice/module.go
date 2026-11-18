@@ -2,6 +2,7 @@ package sluice
 
 import (
 	"errors"
+	"runtime"
 	"sync/atomic"
 
 	"github.com/safing/portmaster/base/log"
@@ -35,17 +36,21 @@ var (
 )
 
 func start() error {
-	// TODO:
-	// Listening on all interfaces for now, as we need this for Windows.
-	// Handle similarly to the nameserver listener.
+	// Windows needs the listeners on all interfaces. On Linux, connections reach the sluice only
+	// through the DNAT to 127.0.0.17:717 and [::1]:717 (see nfqueue_linux.go), so it listens there
+	// alone: the SPN entry port is not open to the local network.
+	ip4, ip6 := "0.0.0.0", "::"
+	if runtime.GOOS == "linux" {
+		ip4, ip6 = "127.0.0.17", "::1"
+	}
 
 	if conf.Integrated() && EnableListener {
-		StartSluice("tcp4", "0.0.0.0:717")
-		StartSluice("udp4", "0.0.0.0:717")
+		StartSluice("tcp4", ip4+":717")
+		StartSluice("udp4", ip4+":717")
 
 		if netenv.IPv6Enabled() {
-			StartSluice("tcp6", "[::]:717")
-			StartSluice("udp6", "[::]:717")
+			StartSluice("tcp6", "["+ip6+"]:717")
+			StartSluice("udp6", "["+ip6+"]:717")
 		} else {
 			log.Warningf("spn/sluice: no IPv6 stack detected, disabling IPv6 SPN entry endpoints")
 		}
