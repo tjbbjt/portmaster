@@ -49,10 +49,12 @@ http = "1.0.0"
 url = "2.5.0"
 thiserror = "1.0"
 log = "0.4.21"
-# rustls with the system's trusted certificates instead of the system OpenSSL, so the binary
-# doesn't depend on the distribution's OpenSSL version (Fedora 45 moved to OpenSSL 4, libssl.so.4,
-# and a build linked to libssl.so.3 stopped starting). reqwest's other default features are kept.
-reqwest = { version = "0.12", default-features = false, features = ["cookies", "json", "rustls-tls-native-roots", "charset", "http2", "macos-system-configuration"] }
+# No TLS at all: this client only talks to the local Portmaster service over plain HTTP
+# (PORTMASTER_BASE_URL and the UI's httpAPI, http://127.0.0.1:817), so it needs no OpenSSL and no
+# rustls. reqwest's default features linked OpenSSL, and a build linked to libssl.so.3 stopped
+# starting once Fedora 45 moved to OpenSSL 4. reqwest's other default features are kept; an
+# https:// URL would now fail with an error instead of connecting.
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "json", "charset", "http2", "macos-system-configuration"] }
 
 rfd = { version = "*", default-features = false, features = [ "tokio", "gtk3", "common-controls-v6" ] }
 open = "5.1.3"
